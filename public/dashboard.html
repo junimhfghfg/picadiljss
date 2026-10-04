@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KeyAuth - Dashboard</title>
+  <style>
+    :root {
+      --bg: #0a0a1a;
+      --sidebar: #0d0d22;
+      --card: rgba(15, 15, 35, 0.85);
+      --border: rgba(255,255,255,0.06);
+      --primary: #7c3aed;
+      --primary-hover: #6d28d9;
+      --primary-glow: rgba(124, 58, 237, 0.3);
+      --accent: #06b6d4;
+      --danger: #ef4444;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --text: #ffffff;
+      --text-muted: rgba(255,255,255,0.5);
+      --text-dim: rgba(255,255,255,0.3);
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+    }
+    body::before {
+      content:''; position:fixed; inset:0; pointer-events:none;
+      background:
+        radial-gradient(ellipse at 20% 50%, rgba(88,28,255,0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(0,200,255,0.05) 0%, transparent 50%);
+    }
+    .sidebar {
+      width: 260px; min-height:100vh; background: var(--sidebar);
+      border-right: 1px solid var(--border); padding: 24px 0;
+      position: fixed; left:0; top:0; bottom:0; z-index:100;
+      display:flex; flex-direction:column;
+    }
+    .sidebar-logo {
+      padding: 0 24px 24px; border-bottom: 1px solid var(--border);
+    }
+    .sidebar-logo h1 {
+      font-size:22px; font-weight:700;
+      background: linear-gradient(135deg, #7c3aed, #06b6d4);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    }
+    .sidebar-logo p { color: var(--text-dim); font-size:12px; margin-top:4px; }
+    .app-selector {
+      padding: 16px 24px; border-bottom: 1px solid var(--border);
+    }
+    .app-selector select {
+      width:100%; padding:10px 12px; background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border); border-radius:8px;
+      color: var(--text); font-size:13px; outline:none; cursor:pointer;
+    }
+    .app-selector select:focus { border-color: var(--primary); }
+    .app-selector select option { background: #1a1a3e; }
+    .nav { flex:1; padding:16px 0; overflow-y:auto; }
+    .nav-item {
+      display:flex; align-items:center; gap:12px;
+      padding: 12px 24px; color: var(--text-muted);
+      cursor:pointer; transition:all 0.2s; font-size:14px; border:none;
+      background:none; width:100%; text-align:left; font-family:inherit;
+    }
+    .nav-item:hover { background: rgba(124,58,237,0.08); color: var(--text); }
+    .nav-item.active { color: var(--primary); background: rgba(124,58,237,0.1); border-right:3px solid var(--primary); }
+    .nav-item svg { width:18px; height:18px; flex-shrink:0; }
+    .nav-section { padding:8px 24px 4px; font-size:11px; color: var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin-top:8px; }
+    .sidebar-footer {
+      padding:16px 24px; border-top:1px solid var(--border);
+    }
+    .btn-logout {
+      width:100%; padding:10px; background: rgba(239,68,68,0.1);
+      border:1px solid rgba(239,68,68,0.2); border-radius:8px;
+      color: #ef4444; cursor:pointer; font-size:13px; font-weight:500;
+      transition:all 0.2s; font-family:inherit;
+    }
+    .btn-logout:hover { background: rgba(239,68,68,0.2); }
+
+    .main { margin-left:260px; flex:1; padding:32px; min-height:100vh; position:relative; }
+    .page { display:none; }
+    .page.active { display:block; }
+
+    .page-header { margin-bottom:28px; }
+    .page-header h2 { font-size:24px; font-weight:600; }
+    .page-header p { color: var(--text-muted); font-size:14px; margin-top:4px; }
+
+    .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:28px; }
+    .stat-card {
+      background: var(--card); border:1px solid var(--border);
+      border-radius:14px; padding:20px 24px;
+      backdrop-filter:blur(10px);
+    }
+    .stat-card .label { font-size:12px; color: var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; }
+    .stat-card .value { font-size:28px; font-weight:700; margin-top:4px; }
+    .stat-card .value.purple { color: var(--primary); }
+    .stat-card .value.cyan { color: var(--accent); }
+    .stat-card .value.green { color: var(--success); }
+    .stat-card .value.red { color: var(--danger); }
+    .stat-card .value.yellow { color: var(--warning); }
+
+    .card {
+      background: var(--card); border:1px solid var(--border);
+      border-radius:14px; padding:24px; backdrop-filter:blur(10px);
+      margin-bottom:20px;
+    }
+    .card-header {
+      display:flex; justify-content:space-between; align-items:center;
+      margin-bottom:20px; flex-wrap:wrap; gap:12px;
+    }
+    .card-header h3 { font-size:16px; font-weight:600; }
+    .card-actions { display:flex; gap:8px; flex-wrap:wrap; }
+
+    .btn {
+      padding:8px 16px; border-radius:8px; border:none; cursor:pointer;
+      font-size:13px; font-weight:500; transition:all 0.2s; font-family:inherit;
+      display:inline-flex; align-items:center; gap:6px;
+    }
+    .btn-primary { background: var(--primary); color:#fff; }
+    .btn-primary:hover { background: var(--primary-hover); box-shadow:0 4px 15px var(--primary-glow); }
+    .btn-danger { background: rgba(239,68,68,0.15); color:#ef4444; border:1px solid rgba(239,68,68,0.2); }
+    .btn-danger:hover { background: rgba(239,68,68,0.25); }
+    .btn-success { background: rgba(34,197,94,0.15); color:#22c55e; border:1px solid rgba(34,197,94,0.2); }
+    .btn-success:hover { background: rgba(34,197,94,0.25); }
+    .btn-warning { background: rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.2); }
+    .btn-warning:hover { background: rgba(245,158,11,0.25); }
+    .btn-ghost { background: rgba(255,255,255,0.04); color: var(--text-muted); border:1px solid var(--border); }
+    .btn-ghost:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+    .btn-sm { padding:6px 12px; font-size:12px; }
+
+    table { width:100%; border-collapse:collapse; }
+    th { text-align:left; padding:12px 16px; font-size:12px; color: var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; border-bottom:1px solid var(--border); font-weight:500; }
+    td { padding:12px 16px; font-size:13px; border-bottom:1px solid var(--border); }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    .table-wrap { overflow-x:auto; }
+
+    .badge {
+      padding:4px 10px; border-radius:6px; font-size:11px; font-weight:600;
+      text-transform:uppercase; letter-spacing:0.5px;
+    }
+    .badge-success { background: rgba(34,197,94,0.15); color:#22c55e; }
+    .badge-danger { background: rgba(239,68,68,0.15); color:#ef4444; }
+    .badge-warning { background: rgba(245,158,11,0.15); color:#f59e0b; }
+    .badge-info { background: rgba(6,182,212,0.15); color:#06b6d4; }
+    .badge-purple { background: rgba(124,58,237,0.15); color:#7c3aed; }
+
+    .modal-overlay {
+      display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6);
+      z-index:1000; align-items:center; justify-content:center;
+      backdrop-filter:blur(4px);
+    }
+    .modal-overlay.active { display:flex; }
+    .modal {
+      background: #14142a; border:1px solid var(--border); border-radius:16px;
+      padding:32px; width:480px; max-width:90vw; max-height:90vh; overflow-y:auto;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+    }
+    .modal h3 { font-size:18px; margin-bottom:20px; }
+    .form-group { margin-bottom:16px; }
+    .form-group label { display:block; font-size:13px; color: var(--text-muted); margin-bottom:6px; font-weight:500; }
+    .form-group input, .form-group select, .form-group textarea {
+      width:100%; padding:10px 14px; background: rgba(255,255,255,0.04);
+      border:1px solid var(--border); border-radius:8px; color:#fff;
+      font-size:14px; outline:none; transition:all 0.2s; font-family:inherit;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      border-color: var(--primary); box-shadow: 0 0 0 3px rgba(124,58,237,0.15);
+    }
+    .form-group select option { background:#1a1a3e; }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:24px; }
+
+    .key-output {
+      background: rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:8px;
+      padding:16px; margin-top:16px; max-height:200px; overflow-y:auto;
+    }
+    .key-output .key-item {
+      font-family: 'Cascadia Code','Fira Code',monospace; font-size:13px;
+      padding:4px 0; color: var(--accent); user-select:all;
+    }
+
+    .toast {
+      position:fixed; bottom:24px; right:24px; z-index:2000;
+      padding:14px 20px; border-radius:10px; font-size:13px; font-weight:500;
+      transform:translateY(100px); opacity:0; transition:all 0.3s;
+      backdrop-filter:blur(10px);
+    }
+    .toast.show { transform:translateY(0); opacity:1; }
+    .toast.success { background: rgba(34,197,94,0.2); border:1px solid rgba(34,197,94,0.3); color:#22c55e; }
+    .toast.error { background: rgba(239,68,68,0.2); border:1px solid rgba(239,68,68,0.3); color:#ef4444; }
+
+    .empty-state {
+      text-align:center; padding:48px 24px; color: var(--text-dim);
+    }
+    .empty-state p { font-size:14px; }
+
+    .copy-btn {
+      background:none; border:none; color: var(--text-muted); cursor:pointer;
+      padding:4px; transition:color 0.2s;
+    }
+    .copy-btn:hover { color: var(--primary); }
+
+    .search-bar {
+      padding:8px 14px; background: rgba(255,255,255,0.04);
+      border:1px solid var(--border); border-radius:8px; color:#fff;
+      font-size:13px; outline:none; width:220px; transition:all 0.2s;
+    }
+    .search-bar:focus { border-color: var(--primary); width:280px; }
+
+    @media(max-width:768px) {
+      .sidebar { width:60px; padding:16px 0; }
+      .sidebar-logo, .app-selector, .nav-section, .sidebar-footer, .nav-item span { display:none; }
+      .sidebar .nav-item { justify-content:center; padding:12px; }
+      .main { margin-left:60px; padding:16px; }
+      .stats-grid { grid-template-columns:1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <h1>KeyAuth</h1>
+      <p>Admin Panel</p>
+    </div>
+    <div class="app-selector">
+      <select id="appSelect" onchange="switchApp()"></select>
+    </div>
+    <nav class="nav">
+      <div class="nav-section">Principal</div>
+      <button class="nav-item active" onclick="showPage('dashboard')" data-page="dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <span>Dashboard</span>
+      </button>
+      <button class="nav-item" onclick="showPage('keys')" data-page="keys">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+        <span>Licenças</span>
+      </button>
+      <div class="nav-section">Gerenciar</div>
+      <button class="nav-item" onclick="showPage('users')" data-page="users">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Usuários</span>
+      </button>
+      <button class="nav-item" onclick="showPage('blacklist')" data-page="blacklist">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+        <span>Blacklist</span>
+      </button>
+      <button class="nav-item" onclick="showPage('variables')" data-page="variables">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        <span>Variáveis</span>
+      </button>
+      <div class="nav-section">Sistema</div>
+      <button class="nav-item" onclick="showPage('logs')" data-page="logs">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span>Logs</span>
+      </button>
+      <button class="nav-item" onclick="showPage('apps')" data-page="apps">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        <span>Aplicações</span>
+      </button>
+      <button class="nav-item" onclick="showPage('settings')" data-page="settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>Configurações</span>
+      </button>
+      <button class="nav-item" onclick="showPage('docs')" data-page="docs">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        <span>Documentação</span>
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="btn-logout" onclick="logout()">Sair</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <h2>Dashboard</h2>
+        <p>Visão geral do sistema</p>
+      </div>
+      <div class="stats-grid" id="statsGrid"></div>
+    </div>
+
+    <!-- KEYS -->
+    <div class="page" id="page-keys">
+      <div class="page-header">
+        <h2>Licenças</h2>
+        <p>Gerenciar chaves de licença</p>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h3>Chaves de Licença</h3>
+          <div class="card-actions">
+            <input type="text" class="search-bar" placeholder="Buscar key..." id="keySearch" oninput="filterKeys()">
+            <button class="btn btn-danger btn-sm" onclick="deleteAllKeys('used')">Limpar Usadas</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteAllKeys()">Apagar Todas</button>
+            <button class="btn btn-primary btn-sm" onclick="openModal('generateKeys')">+ Gerar Keys</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Key</th><th>Duração</th><th>Nível</th><th>Status</th><th>Usos</th><th>Nota</th><th>Criada em</th><th>Ações</th></tr></thead>
+            <tbody id="keysTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- USERS -->
+    <div class="page" id="page-users">
+      <div class="page-header">
+        <h2>Usuários</h2>
+        <p>Gerenciar usuários registrados</p>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h3>Lista de Usuários</h3>
+          <div class="card-actions">
+            <input type="text" class="search-bar" placeholder="Buscar usuário..." id="userSearch" oninput="filterUsers()">
+            <button class="btn btn-primary btn-sm" onclick="openModal('createUser')">+ Criar Usuario</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Usuário</th><th>Email</th><th>Nível</th><th>HWID</th><th>IP</th><th>Expira em</th><th>Status</th><th>Ações</th></tr></thead>
+            <tbody id="usersTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- BLACKLIST -->
+    <div class="page" id="page-blacklist">
+      <div class="page-header">
+        <h2>Blacklist</h2>
+        <p>Bloquear IPs e HWIDs</p>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h3>Lista de Bloqueios</h3>
+          <button class="btn btn-primary btn-sm" onclick="openModal('addBlacklist')">+ Adicionar</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Tipo</th><th>Valor</th><th>Adicionado em</th><th>Ações</th></tr></thead>
+            <tbody id="blacklistTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- VARIABLES -->
+    <div class="page" id="page-variables">
+      <div class="page-header">
+        <h2>Variáveis</h2>
+        <p>Variáveis da aplicação acessíveis via API</p>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h3>Variáveis</h3>
+          <button class="btn btn-primary btn-sm" onclick="openModal('addVariable')">+ Adicionar</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nome</th><th>Valor</th><th>Criada em</th><th>Ações</th></tr></thead>
+            <tbody id="variablesTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOGS -->
+    <div class="page" id="page-logs">
+      <div class="page-header">
+        <h2>Logs</h2>
+        <p>Registro de atividades</p>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h3>Atividades Recentes</h3>
+          <button class="btn btn-danger btn-sm" onclick="clearLogs()">Limpar Logs</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Ação</th><th>Detalhes</th><th>Usuário</th><th>IP</th><th>Data</th></tr></thead>
+            <tbody id="logsTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- APPS -->
+    <div class="page" id="page-apps">
+      <div class="page-header">
+        <h2>Aplicações</h2>
+        <p>Gerenciar suas aplicações</p>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h3>Suas Aplicações</h3>
+          <button class="btn btn-primary btn-sm" onclick="openModal('addApp')">+ Nova App</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nome</th><th>ID</th><th>Secret</th><th>Versão</th><th>Status</th><th>Ações</th></tr></thead>
+            <tbody id="appsTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+      <div class="page-header">
+        <h2>Configurações</h2>
+        <p>Configurações da conta admin</p>
+      </div>
+      <div class="card" style="max-width:500px;">
+        <h3 style="margin-bottom:20px;">Alterar Senha</h3>
+        <div class="form-group">
+          <label>Senha Atual</label>
+          <input type="password" id="currentPassword" autocomplete="current-password">
+        </div>
+        <div class="form-group">
+          <label>Nova Senha</label>
+          <input type="password" id="newPassword" autocomplete="new-password">
+        </div>
+        <div class="form-group">
+          <label>Confirmar Nova Senha</label>
+          <input type="password" id="confirmPassword" autocomplete="new-password">
+        </div>
+        <button class="btn btn-primary" onclick="changePassword()">Alterar Senha</button>
+      </div>
+    </div>
+
+    <!-- DOCS -->
+    <div class="page" id="page-docs">
+      <div class="page-header">
+        <h2>Documentacao da API</h2>
+        <p>Endpoints disponiveis para integracao com seu .exe (C++ com libcurl + nlohmann/json)</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-bottom:16px;">Base URL</h3>
+        <code style="background:rgba(0,0,0,0.3); padding:8px 16px; border-radius:6px; font-size:14px; color: var(--accent);">http://localhost:3000/api/client</code>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom:16px;">Dependencias</h3>
+        <p style="color:var(--text-muted); margin-bottom:12px;">Inclua no seu projeto:</p>
+        <pre style="background:rgba(0,0,0,0.3); padding:16px; border-radius:8px; overflow-x:auto; font-size:13px; color:#ccc; line-height:1.6;">#define CURL_STATICLIB
+#include &lt;curl/curl.h&gt;
+#include &lt;nlohmann/json.hpp&gt;
+#include &lt;string&gt;
+
+#pragma comment(lib, "libcurl_a.lib")
+#pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "wldap32.lib")
+#pragma comment(lib, "crypt32.lib")
+#pragma comment(lib, "normaliz.lib")
+
+using json = nlohmann::json;</pre>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom:16px;">1. Inicializar Aplicacao</h3>
+        <p style="color:var(--text-muted); margin-bottom:12px;"><span class="badge badge-success">POST</span> /api/client/init</p>
+        <pre style="background:rgba(0,0,0,0.3); padding:16px; border-radius:8px; overflow-x:auto; font-size:13px; color:#ccc; line-height:1.6;">json body;
+body["app_id"]     = "SEU-APP-ID";
+body["app_secret"] = "SEU-APP-SECRET";
+body["version"]    = "1.0";
+
+json res = Post("/init", body);
+if (res["success"].get&lt;bool&gt;()) {
+    std::string session_id = res["session_id"];
+}</pre>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom:16px;">2. Login</h3>
+        <p style="color:var(--text-muted); margin-bottom:12px;"><span class="badge badge-success">POST</span> /api/client/login</p>
+        <pre style="background:rgba(0,0,0,0.3); padding:16px; border-radius:8px; overflow-x:auto; font-size:13px; color:#ccc; line-height:1.6;">json body;
+body["app_id"]   = APP_ID;
+body["username"] = "usuario";
+body["password"] = "senha";
+body["hwid"]     = GenerateHWID();
+
+json res = Post("/login", body);
+if (res["success"].get&lt;bool&gt;()) {
+    std::string session = res["session_id"];
+    std::string user    = res["username"];
+    int level           = res["level"];
+    std::string expiry  = res["expiry"];
+}</pre>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom:16px;">3. Registro</h3>
+        <p style="color:var(--text-muted); margin-bottom:12px;"><span class="badge badge-success">POST</span> /api/client/register</p>
+        <pre style="background:rgba(0,0,0,0.3); padding:16px; border-radius:8px; overflow-x:auto; font-size:13px; color:#ccc; line-height:1.6;">json body;
+body["app_id"]   = APP_ID;
+body["username"] = "usuario";
+body["password"] = "senha";
+body["key"]      = "CHAVE-DE-LICENCA";
+body["email"]    = "email@exemplo.com";
+body["hwid"]     = GenerateHWID();
+
+json res = Post("/register", body);
+if (res["success"].get&lt;bool&gt;()) {
+    // Registro OK, faca login
+}</pre>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom:16px;">4. Ativar Licenca (sem registro)</h3>
+        <p style="color:var(--text-muted); margin-bottom:12px;"><span class="badge badge-success">POST</span> /api/client/license</p>
+        <pre style="background:rgba(0,0,0,0.3); padding:16px; border-radius:8px; overflow-x:auto; font-size:13px; color:#ccc; line-height:1.6;">json body;
+body["app_id"] = APP_ID;
+body["key"]    = "CHAVE-DE-LICENCA";
+body["hwid"]   = GenerateHWID();
+
+json res = Post("/license", body);
+if (res["success"].get&lt;bool&gt;()) {
+    int level          = res["level"];
+    std::string expiry = res["expiry"];
+}</pre>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom:16px;">5. Verificar Sessao</h3>
+        <p style="color:var(--text-muted); margin-bottom:12px;"><span class="badge badge-success">POST</span> /api/client/check-session</p>
+        <pre style="background:rgba(0,0,0,0.3); padding:16px; border-radius:8px; overflow-x:auto; font-size:13px; color:#ccc; line-height:1.6;">json body;
+body["session_id"] = sessionId;
+
+json res = Post("/check-session", body);
+if (res["success"].get&lt;bool&gt;()) {
+    std::string user = res["username"];
+    int level        = res["level"];
+}</pre>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom:16px;">6. Obter Variavel</h3>
+        <p style="color:var(--text-muted); margin-bottom:12px;"><span class="badge badge-success">POST</span> /api/client/var</p>
+        <pre style="background:rgba(0,0,0,0.3); padding:16px; border-radius:8px; overflow-x:auto; font-size:13px; color:#ccc; line-height:1.6;">json body;
+body["app_id"]   = APP_ID;
+body["var_name"] = "nome_da_variavel";
+
+json res = Post("/var", body);
+if (res["success"].get&lt;bool&gt;()) {
+    std::string valor = res["value"];
+}</pre>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom:16px;">Classe Completa C++ (libcurl + nlohmann/json)</h3>
+        <pre style="background:rgba(0,0,0,0.3); padding:16px; border-radius:8px; overflow-x:auto; font-size:13px; color:#ccc; line-height:1.6;">#pragma once
+#define CURL_STATICLIB
+#include &lt;string&gt;
+#include &lt;curl/curl.h&gt;
+#include &lt;nlohmann/json.hpp&gt;
+#include &lt;windows.h&gt;
+#include &lt;Wbemidl.h&gt;
+#include &lt;comdef.h&gt;
+
+#pragma comment(lib, "libcurl_a.lib")
+#pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "wldap32.lib")
+#pragma comment(lib, "crypt32.lib")
+#pragma comment(lib, "normaliz.lib")
+#pragma comment(lib, "wbemuuid.lib")
+
+using json = nlohmann::json;
+
+static size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
+    ((std::string*)userp)-&gt;append((char*)contents, size * nmemb);
+    return size * nmemb;
+}
+
+struct AuthResult {
+    bool success = false;
+    std::string message;
+    std::string session_id;
+    std::string username;
+    std::string expiry;
+    int level = 0;
+};
+
+class KeyAuthClient {
+private:
+    std::string baseUrl;
+    std::string appId;
+    std::string appSecret;
+    std::string sessionId;
+
+public:
+    KeyAuthClient(const std::string&amp; url,
+                  const std::string&amp; id,
+                  const std::string&amp; secret)
+        : baseUrl(url), appId(id), appSecret(secret) {}
+
+    // POST request generico
+    json Post(const std::string&amp; endpoint, const json&amp; body) {
+        CURL* curl = curl_easy_init();
+        if (!curl) return json{{"success", false}, {"message", "Erro CURL"}};
+
+        std::string response;
+        std::string url = baseUrl + endpoint;
+        std::string data = body.dump();
+
+        struct curl_slist* headers = nullptr;
+        headers = curl_slist_append(headers, "Content-Type: application/json");
+
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &amp;response);
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+
+        CURLcode res = curl_easy_perform(curl);
+        curl_slist_free_all(headers);
+        curl_easy_cleanup(curl);
+
+        if (res != CURLE_OK)
+            return json{{"success", false}, {"message", "Erro de conexao"}};
+
+        return json::parse(response, nullptr, false);
+    }
+
+    // 1. Inicializar app
+    bool Init() {
+        json body;
+        body["app_id"]     = appId;
+        body["app_secret"] = appSecret;
+        body["version"]    = "1.0";
+
+        json res = Post("/init", body);
+        if (res.value("success", false)) {
+            sessionId = res.value("session_id", "");
+            return true;
+        }
+        return false;
+    }
+
+    // 2. Login
+    AuthResult Login(const std::string&amp; user,
+                     const std::string&amp; pass,
+                     const std::string&amp; hwid) {
+        AuthResult result;
+        json body;
+        body["app_id"]   = appId;
+        body["username"] = user;
+        body["password"] = pass;
+        body["hwid"]     = hwid;
+
+        json res = Post("/login", body);
+        result.success = res.value("success", false);
+        if (result.success) {
+            result.session_id = res.value("session_id", "");
+            result.username   = res.value("username", "");
+            result.level      = res.value("level", 1);
+            result.expiry     = res.value("expiry", "");
+            result.message    = "Login OK";
+        } else {
+            result.message = res.value("message", "Erro");
+        }
+        return result;
+    }
+
+    // 3. Registro
+    AuthResult Register(const std::string&amp; user,
+                        const std::string&amp; pass,
+                        const std::string&amp; key,
+                        const std::string&amp; email,
+                        const std::string&amp; hwid) {
+        AuthResult result;
+        json body;
+        body["app_id"]   = appId;
+        body["username"] = user;
+        body["password"] = pass;
+        body["key"]      = key;
+        body["email"]    = email;
+        body["hwid"]     = hwid;
+
+        json res = Post("/register", body);
+        result.success = res.value("success", false);
+        result.message = res.value("message", "");
+        return result;
+    }
+
+    // 4. Ativar licenca
+    AuthResult License(const std::string&amp; key,
+                       const std::string&amp; hwid) {
+        AuthResult result;
+        json body;
+        body["app_id"] = appId;
+        body["key"]    = key;
+        body["hwid"]   = hwid;
+
+        json res = Post("/license", body);
+        result.success = res.value("success", false);
+        if (result.success) {
+            result.level  = res.value("level", 1);
+            result.expiry = res.value("expiry", "");
+        }
+        result.message = res.value("message", "");
+        return result;
+    }
+
+    // 5. Verificar sessao
+    bool CheckSession(const std::string&amp; sid) {
+        json body;
+        body["session_id"] = sid;
+        json res = Post("/check-session", body);
+        return res.value("success", false);
+    }
+
+    // 6. Obter variavel
+    std::string GetVar(const std::string&amp; varName) {
+        json body;
+        body["app_id"]   = appId;
+        body["var_name"] = varName;
+        json res = Post("/var", body);
+        if (res.value("success", false))
+            return res.value("value", "");
+        return "";
+    }
+
+    const std::string&amp; GetSessionId() const { return sessionId; }
+};</pre>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom:16px;">Exemplo de uso no main.cpp</h3>
+        <pre style="background:rgba(0,0,0,0.3); padding:16px; border-radius:8px; overflow-x:auto; font-size:13px; color:#ccc; line-height:1.6;">#include "KeyAuthClient.h"
+
+int main() {
+    curl_global_init(CURL_GLOBAL_ALL);
+
+    KeyAuthClient auth(
+        "http://localhost:3000/api/client",
+        "SEU-APP-ID",
+        "SEU-APP-SECRET"
+    );
+
+    // Inicializar
+    if (!auth.Init()) {
+        printf("Erro ao inicializar\n");
+        return 1;
+    }
+
+    // Login
+    std::string hwid = GenerateHWID();
+    AuthResult login = auth.Login("usuario", "senha", hwid);
+
+    if (login.success) {
+        printf("Bem-vindo %s!\n", login.username.c_str());
+        printf("Nivel: %d\n", login.level);
+        printf("Expira: %s\n", login.expiry.c_str());
+        printf("Session: %s\n", login.session_id.c_str());
+
+        // Obter variavel
+        std::string val = auth.GetVar("minha_var");
+        printf("Variavel: %s\n", val.c_str());
+
+        // Verificar sessao
+        if (auth.CheckSession(login.session_id))
+            printf("Sessao valida!\n");
+    } else {
+        printf("Erro: %s\n", login.message.c_str());
+    }
+
+    curl_global_cleanup();
+    return 0;
+}
+
+// Gerar HWID (Windows)
+std::string GenerateHWID() {
+    HKEY hKey;
+    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+        "SOFTWARE\\Microsoft\\Cryptography",
+        0, KEY_READ | KEY_WOW64_64KEY, &amp;hKey) != ERROR_SUCCESS)
+        return "UNKNOWN";
+
+    char buffer[256];
+    DWORD size = sizeof(buffer);
+    RegQueryValueExA(hKey, "MachineGuid", NULL, NULL,
+                     (LPBYTE)buffer, &amp;size);
+    RegCloseKey(hKey);
+    return std::string(buffer);
+}</pre>
+      </div>
+    </div>
+  </main>
+
+  <!-- MODALS -->
+  <div class="modal-overlay" id="modal-generateKeys">
+    <div class="modal">
+      <h3>Gerar Chaves de Licença</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Quantidade</label>
+          <input type="number" id="genAmount" value="1" min="1" max="500">
+        </div>
+        <div class="form-group">
+          <label>Prefixo (opcional)</label>
+          <input type="text" id="genPrefix" placeholder="Ex: VIP">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Duração</label>
+          <input type="number" id="genDuration" value="30" min="1">
+        </div>
+        <div class="form-group">
+          <label>Unidade</label>
+          <select id="genDurationUnit">
+            <option value="hours">Horas</option>
+            <option value="days" selected>Dias</option>
+            <option value="weeks">Semanas</option>
+            <option value="months">Meses</option>
+            <option value="years">Anos</option>
+            <option value="lifetime">Lifetime</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nível</label>
+          <input type="number" id="genLevel" value="1" min="1">
+        </div>
+        <div class="form-group">
+          <label>Máx. Usos</label>
+          <input type="number" id="genMaxUses" value="1" min="1">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Nota (opcional)</label>
+        <input type="text" id="genNote" placeholder="Nota interna">
+      </div>
+      <div id="generatedKeysOutput"></div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal('generateKeys')">Fechar</button>
+        <button class="btn btn-primary" onclick="generateKeys()">Gerar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-addBlacklist">
+    <div class="modal">
+      <h3>Adicionar à Blacklist</h3>
+      <div class="form-group">
+        <label>Tipo</label>
+        <select id="blType">
+          <option value="ip">IP</option>
+          <option value="hwid">HWID</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Valor</label>
+        <input type="text" id="blValue" placeholder="IP ou HWID">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal('addBlacklist')">Cancelar</button>
+        <button class="btn btn-primary" onclick="addBlacklist()">Adicionar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-addVariable">
+    <div class="modal">
+      <h3>Adicionar Variável</h3>
+      <div class="form-group">
+        <label>Nome</label>
+        <input type="text" id="varName" placeholder="nome_variavel">
+      </div>
+      <div class="form-group">
+        <label>Valor</label>
+        <textarea id="varValue" rows="3" placeholder="Valor da variável"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal('addVariable')">Cancelar</button>
+        <button class="btn btn-primary" onclick="addVariable()">Adicionar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-addApp">
+    <div class="modal">
+      <h3>Nova Aplicação</h3>
+      <div class="form-group">
+        <label>Nome da Aplicação</label>
+        <input type="text" id="appName" placeholder="Minha App">
+      </div>
+      <div class="form-group">
+        <label>Versão</label>
+        <input type="text" id="appVersion" value="1.0">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal('addApp')">Cancelar</button>
+        <button class="btn btn-primary" onclick="addApp()">Criar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-createUser">
+    <div class="modal">
+      <h3>Criar Usuario</h3>
+      <div class="form-group">
+        <label>Usuario</label>
+        <input type="text" id="createUserName" placeholder="nome do usuario">
+      </div>
+      <div class="form-group">
+        <label>Senha</label>
+        <input type="password" id="createUserPass" placeholder="senha do usuario">
+      </div>
+      <div class="form-group">
+        <label>Email (opcional)</label>
+        <input type="email" id="createUserEmail" placeholder="email@exemplo.com">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nivel</label>
+          <input type="number" id="createUserLevel" value="1" min="1">
+        </div>
+        <div class="form-group">
+          <label>Dias de Licenca</label>
+          <input type="number" id="createUserDays" value="30" min="1">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal('createUser')">Cancelar</button>
+        <button class="btn btn-primary" onclick="createUser()">Criar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-extendUser">
+    <div class="modal">
+      <h3>Estender Licença</h3>
+      <div class="form-group">
+        <label>Dias para adicionar</label>
+        <input type="number" id="extendDays" value="30" min="1">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal('extendUser')">Cancelar</button>
+        <button class="btn btn-primary" onclick="confirmExtendUser()">Estender</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const API = '/api/admin';
+    let token = localStorage.getItem('token');
+    let currentAppId = '';
+    let allKeys = [];
+    let allUsers = [];
+    let extendUserId = null;
+
+    if (!token) window.location.href = '/';
+
+    function headers() {
+      return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
+    }
+
+    async function api(method, endpoint, body) {
+      const opts = { method, headers: headers() };
+      if (body) opts.body = JSON.stringify(body);
+      const res = await fetch(API + endpoint, opts);
+      if (res.status === 401) { logout(); return null; }
+      return res.json();
+    }
+
+    function showToast(msg, type = 'success') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = `toast ${type} show`;
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    function showPage(page) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById('page-' + page).classList.add('active');
+      document.querySelector(`[data-page="${page}"]`).classList.add('active');
+      if (page === 'dashboard') loadStats();
+      if (page === 'keys') loadKeys();
+      if (page === 'users') loadUsers();
+      if (page === 'logs') loadLogs();
+      if (page === 'blacklist') loadBlacklist();
+      if (page === 'variables') loadVariables();
+      if (page === 'apps') loadApps();
+    }
+
+    function openModal(id) { document.getElementById('modal-' + id).classList.add('active'); }
+    function closeModal(id) { document.getElementById('modal-' + id).classList.remove('active'); }
+
+    function logout() {
+      localStorage.removeItem('token');
+      window.location.href = '/';
+    }
+
+    function formatDate(d) {
+      if (!d) return '-';
+      return new Date(d).toLocaleString('pt-BR');
+    }
+
+    function truncate(s, len = 20) {
+      if (!s) return '-';
+      return s.length > len ? s.substring(0, len) + '...' : s;
+    }
+
+    async function loadApps() {
+      const data = await api('GET', '/apps');
+      if (!data) return;
+      const select = document.getElementById('appSelect');
+      const tbody = document.getElementById('appsTable');
+
+      select.innerHTML = data.data.map(a => `<option value="${a.id}" ${a.id === currentAppId ? 'selected' : ''}>${a.name}</option>`).join('');
+
+      if (!currentAppId && data.data.length > 0) {
+        currentAppId = data.data[0].id;
+      }
+
+      tbody.innerHTML = data.data.map(a => `
+        <tr>
+          <td>${a.name}</td>
+          <td><span style="font-family:monospace;font-size:12px;color:var(--text-muted)">${truncate(a.id, 16)}</span>
+            <button class="copy-btn" onclick="copyText('${a.id}')" title="Copiar">&#x2398;</button></td>
+          <td><span style="font-family:monospace;font-size:12px;color:var(--text-muted)">${truncate(a.secret, 16)}</span>
+            <button class="copy-btn" onclick="copyText('${a.secret}')" title="Copiar">&#x2398;</button></td>
+          <td>${a.version}</td>
+          <td>${a.status ? '<span class="badge badge-success">Ativa</span>' : '<span class="badge badge-danger">Inativa</span>'}</td>
+          <td>
+            <button class="btn btn-warning btn-sm" onclick="toggleApp('${a.id}','${a.name}','${a.version}',${a.status})">${a.status ? 'Desativar' : 'Ativar'}</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteApp('${a.id}')">Excluir</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function switchApp() {
+      currentAppId = document.getElementById('appSelect').value;
+      const activePage = document.querySelector('.page.active');
+      if (activePage) {
+        const pageId = activePage.id.replace('page-', '');
+        showPage(pageId);
+      }
+    }
+
+    async function addApp() {
+      const name = document.getElementById('appName').value;
+      const version = document.getElementById('appVersion').value;
+      if (!name) return showToast('Nome obrigatório', 'error');
+      await api('POST', '/apps', { name, version });
+      closeModal('addApp');
+      showToast('Aplicação criada');
+      loadApps();
+    }
+
+    async function deleteApp(id) {
+      if (!confirm('Excluir aplicação? Todos os dados serão perdidos.')) return;
+      await api('DELETE', '/apps/' + id);
+      showToast('Aplicação excluída');
+      currentAppId = '';
+      loadApps();
+    }
+
+    async function toggleApp(id, name, version, status) {
+      await api('PUT', '/apps/' + id, { name, version, status: status ? 0 : 1 });
+      showToast(status ? 'App desativada' : 'App ativada');
+      loadApps();
+    }
+
+    async function loadStats() {
+      if (!currentAppId) return;
+      const data = await api('GET', '/stats/' + currentAppId);
+      if (!data) return;
+      const s = data.data;
+      document.getElementById('statsGrid').innerHTML = `
+        <div class="stat-card"><div class="label">Total de Keys</div><div class="value purple">${s.totalKeys}</div></div>
+        <div class="stat-card"><div class="label">Keys Usadas</div><div class="value cyan">${s.usedKeys}</div></div>
+        <div class="stat-card"><div class="label">Keys Disponíveis</div><div class="value green">${s.unusedKeys}</div></div>
+        <div class="stat-card"><div class="label">Keys Banidas</div><div class="value red">${s.bannedKeys}</div></div>
+        <div class="stat-card"><div class="label">Total de Usuários</div><div class="value purple">${s.totalUsers}</div></div>
+        <div class="stat-card"><div class="label">Usuários Banidos</div><div class="value red">${s.bannedUsers}</div></div>
+        <div class="stat-card"><div class="label">Online Agora</div><div class="value green">${s.onlineUsers}</div></div>
+      `;
+    }
+
+    async function loadKeys() {
+      if (!currentAppId) return;
+      const data = await api('GET', '/keys/' + currentAppId);
+      if (!data) return;
+      allKeys = data.data;
+      renderKeys(allKeys);
+    }
+
+    function renderKeys(keys) {
+      const tbody = document.getElementById('keysTable');
+      if (keys.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><p>Nenhuma key encontrada</p></div></td></tr>';
+        return;
+      }
+      tbody.innerHTML = keys.map(k => `
+        <tr>
+          <td><span style="font-family:monospace;font-size:12px;color:var(--accent)">${k.key_value}</span>
+            <button class="copy-btn" onclick="copyText('${k.key_value}')">&#x2398;</button></td>
+          <td>${k.duration} ${k.duration_unit}</td>
+          <td>${k.level}</td>
+          <td>${k.status === 'unused' ? '<span class="badge badge-success">Disponível</span>' :
+                k.status === 'used' ? '<span class="badge badge-info">Usada</span>' :
+                k.status === 'banned' ? '<span class="badge badge-danger">Banida</span>' : k.status}</td>
+          <td>${k.used_count}/${k.max_uses}</td>
+          <td>${k.note || '-'}</td>
+          <td>${formatDate(k.created_at)}</td>
+          <td>
+            <button class="btn ${k.status === 'banned' ? 'btn-success' : 'btn-warning'} btn-sm" onclick="toggleBanKey(${k.id})">${k.status === 'banned' ? 'Desbanir' : 'Banir'}</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteKey(${k.id})">Excluir</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function filterKeys() {
+      const q = document.getElementById('keySearch').value.toLowerCase();
+      renderKeys(allKeys.filter(k => k.key_value.toLowerCase().includes(q) || (k.note || '').toLowerCase().includes(q)));
+    }
+
+    async function generateKeys() {
+      const body = {
+        appId: currentAppId,
+        amount: parseInt(document.getElementById('genAmount').value),
+        duration: parseInt(document.getElementById('genDuration').value),
+        durationUnit: document.getElementById('genDurationUnit').value,
+        level: parseInt(document.getElementById('genLevel').value),
+        maxUses: parseInt(document.getElementById('genMaxUses').value),
+        prefix: document.getElementById('genPrefix').value,
+        note: document.getElementById('genNote').value
+      };
+      const data = await api('POST', '/keys/generate', body);
+      if (!data) return;
+      const output = document.getElementById('generatedKeysOutput');
+      output.innerHTML = `
+        <div class="key-output">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <span style="color:var(--text-muted);font-size:12px;">${data.data.length} keys geradas</span>
+            <button class="btn btn-ghost btn-sm" onclick="copyText('${data.data.join('\\n')}')">Copiar Todas</button>
+          </div>
+          ${data.data.map(k => `<div class="key-item">${k}</div>`).join('')}
+        </div>
+      `;
+      showToast(`${data.data.length} keys geradas`);
+      loadKeys();
+    }
+
+    async function deleteKey(id) {
+      await api('DELETE', '/keys/' + id);
+      showToast('Key excluída');
+      loadKeys();
+    }
+
+    async function toggleBanKey(id) {
+      const data = await api('POST', '/keys/ban/' + id);
+      showToast(data.status === 'banned' ? 'Key banida' : 'Key desbanida');
+      loadKeys();
+    }
+
+    async function deleteAllKeys(status) {
+      const msg = status ? `Excluir todas as keys ${status}?` : 'Excluir TODAS as keys?';
+      if (!confirm(msg)) return;
+      await api('POST', '/keys/delete-all/' + currentAppId, { status });
+      showToast('Keys excluídas');
+      loadKeys();
+    }
+
+    async function loadUsers() {
+      if (!currentAppId) return;
+      const data = await api('GET', '/users/' + currentAppId);
+      if (!data) return;
+      allUsers = data.data;
+      renderUsers(allUsers);
+    }
+
+    function renderUsers(users) {
+      const tbody = document.getElementById('usersTable');
+      if (users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><p>Nenhum usuário encontrado</p></div></td></tr>';
+        return;
+      }
+      tbody.innerHTML = users.map(u => `
+        <tr>
+          <td><strong>${u.username}</strong></td>
+          <td>${u.email || '-'}</td>
+          <td>${u.level}</td>
+          <td style="font-family:monospace;font-size:11px;color:var(--text-muted)">${truncate(u.hwid, 16) || '-'}</td>
+          <td style="font-size:12px;color:var(--text-muted)">${u.ip || '-'}</td>
+          <td>${u.expiry ? formatDate(u.expiry) : 'Sem limite'}</td>
+          <td>${u.banned ? '<span class="badge badge-danger">Banido</span>' : '<span class="badge badge-success">Ativo</span>'}</td>
+          <td style="white-space:nowrap;">
+            <button class="btn ${u.banned ? 'btn-success' : 'btn-warning'} btn-sm" onclick="toggleBanUser(${u.id})">${u.banned ? 'Desbanir' : 'Banir'}</button>
+            <button class="btn btn-ghost btn-sm" onclick="resetHwid(${u.id})" title="Reset HWID">HWID</button>
+            <button class="btn btn-ghost btn-sm" onclick="extendUser(${u.id})" title="Estender">+Dias</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id})">Excluir</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function filterUsers() {
+      const q = document.getElementById('userSearch').value.toLowerCase();
+      renderUsers(allUsers.filter(u => u.username.toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q)));
+    }
+
+    async function createUser() {
+      const username = document.getElementById('createUserName').value;
+      const password = document.getElementById('createUserPass').value;
+      const email = document.getElementById('createUserEmail').value;
+      const level = parseInt(document.getElementById('createUserLevel').value) || 1;
+      const days = parseInt(document.getElementById('createUserDays').value) || 30;
+      if (!username || !password) return showToast('Usuario e senha obrigatorios', 'error');
+      const data = await api('POST', '/users/create', { appId: currentAppId, username, password, email, level, days });
+      if (data && data.success) {
+        closeModal('createUser');
+        showToast('Usuario criado com sucesso');
+        document.getElementById('createUserName').value = '';
+        document.getElementById('createUserPass').value = '';
+        document.getElementById('createUserEmail').value = '';
+        loadUsers();
+      } else {
+        showToast(data?.message || 'Erro ao criar usuario', 'error');
+      }
+    }
+
+    async function toggleBanUser(id) {
+      const reason = prompt('Motivo do ban (ou vazio):') || '';
+      const data = await api('POST', '/users/ban/' + id, { reason });
+      showToast(data.banned ? 'Usuário banido' : 'Usuário desbanido');
+      loadUsers();
+    }
+
+    async function resetHwid(id) {
+      if (!confirm('Resetar HWID deste usuário?')) return;
+      await api('POST', '/users/reset-hwid/' + id);
+      showToast('HWID resetado');
+      loadUsers();
+    }
+
+    function extendUser(id) {
+      extendUserId = id;
+      openModal('extendUser');
+    }
+
+    async function confirmExtendUser() {
+      const days = parseInt(document.getElementById('extendDays').value);
+      await api('POST', '/users/extend/' + extendUserId, { days });
+      closeModal('extendUser');
+      showToast(`Licença estendida em ${days} dias`);
+      loadUsers();
+    }
+
+    async function deleteUser(id) {
+      if (!confirm('Excluir este usuário?')) return;
+      await api('DELETE', '/users/' + id);
+      showToast('Usuário excluído');
+      loadUsers();
+    }
+
+    async function loadLogs() {
+      if (!currentAppId) return;
+      const data = await api('GET', '/logs/' + currentAppId);
+      if (!data) return;
+      const tbody = document.getElementById('logsTable');
+      if (data.data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><p>Nenhum log encontrado</p></div></td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.data.map(l => `
+        <tr>
+          <td><span class="badge badge-purple">${l.action}</span></td>
+          <td>${l.details}</td>
+          <td>${l.username || '-'}</td>
+          <td style="font-size:12px;color:var(--text-muted)">${l.ip || '-'}</td>
+          <td style="font-size:12px">${formatDate(l.created_at)}</td>
+        </tr>
+      `).join('');
+    }
+
+    async function clearLogs() {
+      if (!confirm('Limpar todos os logs?')) return;
+      await api('DELETE', '/logs/' + currentAppId);
+      showToast('Logs limpos');
+      loadLogs();
+    }
+
+    async function loadBlacklist() {
+      if (!currentAppId) return;
+      const data = await api('GET', '/blacklist/' + currentAppId);
+      if (!data) return;
+      const tbody = document.getElementById('blacklistTable');
+      if (data.data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><p>Blacklist vazia</p></div></td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.data.map(b => `
+        <tr>
+          <td><span class="badge badge-warning">${b.type.toUpperCase()}</span></td>
+          <td style="font-family:monospace;font-size:13px">${b.value}</td>
+          <td>${formatDate(b.created_at)}</td>
+          <td><button class="btn btn-danger btn-sm" onclick="removeBlacklist(${b.id})">Remover</button></td>
+        </tr>
+      `).join('');
+    }
+
+    async function addBlacklist() {
+      const type = document.getElementById('blType').value;
+      const value = document.getElementById('blValue').value;
+      if (!value) return showToast('Valor obrigatório', 'error');
+      await api('POST', '/blacklist', { appId: currentAppId, type, value });
+      closeModal('addBlacklist');
+      showToast('Adicionado à blacklist');
+      loadBlacklist();
+    }
+
+    async function removeBlacklist(id) {
+      await api('DELETE', '/blacklist/' + id);
+      showToast('Removido da blacklist');
+      loadBlacklist();
+    }
+
+    async function loadVariables() {
+      if (!currentAppId) return;
+      const data = await api('GET', '/variables/' + currentAppId);
+      if (!data) return;
+      const tbody = document.getElementById('variablesTable');
+      if (data.data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><p>Nenhuma variável</p></div></td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.data.map(v => `
+        <tr>
+          <td><strong>${v.var_name}</strong></td>
+          <td style="font-family:monospace;font-size:13px;color:var(--accent)">${v.var_value}</td>
+          <td>${formatDate(v.created_at)}</td>
+          <td><button class="btn btn-danger btn-sm" onclick="removeVariable(${v.id})">Excluir</button></td>
+        </tr>
+      `).join('');
+    }
+
+    async function addVariable() {
+      const varName = document.getElementById('varName').value;
+      const varValue = document.getElementById('varValue').value;
+      if (!varName) return showToast('Nome obrigatório', 'error');
+      await api('POST', '/variables', { appId: currentAppId, varName, varValue });
+      closeModal('addVariable');
+      showToast('Variável adicionada');
+      loadVariables();
+    }
+
+    async function removeVariable(id) {
+      await api('DELETE', '/variables/' + id);
+      showToast('Variável excluída');
+      loadVariables();
+    }
+
+    async function changePassword() {
+      const currentPassword = document.getElementById('currentPassword').value;
+      const newPassword = document.getElementById('newPassword').value;
+      const confirm = document.getElementById('confirmPassword').value;
+      if (!currentPassword || !newPassword) return showToast('Preencha todos os campos', 'error');
+      if (newPassword !== confirm) return showToast('Senhas não conferem', 'error');
+      const data = await api('POST', '/change-password', { currentPassword, newPassword });
+      if (data && data.success) {
+        showToast('Senha alterada com sucesso');
+        document.getElementById('currentPassword').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+      } else {
+        showToast(data?.message || 'Erro ao alterar senha', 'error');
+      }
+    }
+
+    function copyText(text) {
+      navigator.clipboard.writeText(text).then(() => showToast('Copiado!')).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta);
+        ta.select(); document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast('Copiado!');
+      });
+    }
+
+    document.querySelectorAll('.modal-overlay').forEach(m => {
+      m.addEventListener('click', (e) => {
+        if (e.target === m) m.classList.remove('active');
+      });
+    });
+
+    loadApps().then(() => loadStats());
+  </script>
+</body>
+</html>

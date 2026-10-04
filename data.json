@@ -1,0 +1,158 @@
+{
+  "_nextId": 17,
+  "admins": [
+    {
+      "id": 1,
+      "username": "admin",
+      "password": "$2a$10$hX6tv/ZDjb0sdd3y7ysFQumDnYUApgKUK96uSHtEgKsbc22X4//XW",
+      "created_at": "2026-10-04T16:11:49.212Z"
+    }
+  ],
+  "apps": [
+    {
+      "id": "d13ec92f-691e-4ac6-88d6-f04e4173f3a2",
+      "name": "Minha Aplicação",
+      "secret": "7b567d1b802b49a5b0c2b496ff09265b",
+      "version": "1.0",
+      "status": 1,
+      "created_at": "2026-10-04T19:10:17.917Z"
+    }
+  ],
+  "keys": [],
+  "users": [
+    {
+      "id": 7,
+      "username": "teste",
+      "password": "$2a$10$yN6qsSoYfep5wIVZYlha2.JaeUm0xH0TMbp/owrHqYk8eexqkTgje",
+      "email": "teste@teste.com",
+      "app_id": "d13ec92f-691e-4ac6-88d6-f04e4173f3a2",
+      "hwid": "CPUID123-MACHINEGUID456-UUID789",
+      "ip": "::1",
+      "key_value": "",
+      "level": 1,
+      "expiry": "2026-11-03T19:11:40.003Z",
+      "banned": 0,
+      "ban_reason": "",
+      "created_at": "2026-10-04T19:11:40.004Z",
+      "last_login": "2026-10-04T19:19:49.508Z"
+    },
+    {
+      "id": 14,
+      "username": "se",
+      "password": "$2a$10$U.ISkkIp1WXLJC3rimynw.7EtRp/RdLNeklPW3Ts1LL91qR9P7mG2",
+      "email": "",
+      "app_id": "d13ec92f-691e-4ac6-88d6-f04e4173f3a2",
+      "hwid": "178BFBFF00A50F00-baa39cfe-4567-4736-a425-7a55ad06aaac-03000200-0400-0500-0006-000700080009",
+      "ip": "::1",
+      "key_value": "",
+      "level": 1,
+      "expiry": "2026-11-03T19:20:51.283Z",
+      "banned": 0,
+      "ban_reason": "",
+      "created_at": "2026-10-04T19:20:51.283Z",
+      "last_login": "2026-10-04T19:20:56.953Z"
+    }
+  ],
+  "sessions": [
+    {
+      "id": "f6031728-58f2-4901-a316-9d8fbc8ebc6c",
+      "user_id": 7,
+      "app_id": "d13ec92f-691e-4ac6-88d6-f04e4173f3a2",
+      "ip": "::1",
+      "created_at": "2026-10-04T19:12:39.069Z",
+      "expires_at": "2026-10-05T19:12:39.069Z"
+    },
+    {
+      "id": "810d1dd0-f165-4bec-af4c-617ca09483e7",
+      "user_id": 7,
+      "app_id": "d13ec92f-691e-4ac6-88d6-f04e4173f3a2",
+      "ip": "::1",
+      "created_at": "2026-10-04T19:19:49.508Z",
+      "expires_at": "2026-10-05T19:19:49.508Z"
+    },
+    {
+      "id": "71311688-3ca3-4a86-a377-721e0a9a51dd",
+      "user_id": 14,
+      "app_id": "d13ec92f-691e-4ac6-88d6-f04e4173f3a2",
+      "ip": "::1",
+      "created_at": "2026-10-04T19:20:56.953Z",
+      "expires_at": "2026-10-05T19:20:56.953Z"
+    }
+  ],
+  "logs": [
+    {
+      "id": 8,
+      "app_id": "d13ec92f-691e-4ac6-88d6-f04e4173f3a2",
+      "action": "init",
+      "details": "Aplicação iniciada",
+      "ip": "::1",
+      "username": "",
+      "created_at": "2026-10-04T19:12:38.951Z"
+    },
+    {
+      "id": 9,
+      "app_id": "d13ec92f-691e-4ac6-88d6-f04e4173f3a2",
+      "action": "login",
+      "details": "Usuário teste logou",
+      "ip": "::1",
+      "username": "teste",
+      "created_at": "2026-10-04T19:12:39.069Z"
+    },
+    {
+      "id": 10,
+      "app_id": "d13ec92f-691e-4ac6-88d6-f04e4173f3a2",
+      "action": "init",
+      "details": "Aplicação iniciada",
+      "ip": "::1",
+      "username": "",
+      "created_at": "2026-10-04T19:19:39.797Z"
+    },
+    {
+      "id": 11,
+      "app_id": "d13ec92f-691e-4ac6-88d6-f04e4173f3a2",
+      "action": "reset-hwid",
+      "details": "HWID resetado para teste",
+      "ip": "::1",
+      "username": "teste",
+      "created_at": "2026-10-04T19:19:49.449Z"
+    },
+    {
+      "id": 12,
+      "app_id": "d13ec92f-691e-4ac6-88d6-f04e4173f3a2",
+      "action": "login",
+      "details": "Usuário teste logou",
+      "ip": "::1",
+      "username": "teste",
+      "created_at": "2026-10-04T19:19:49.508Z"
+    },
+    {
+      "id": 13,
+      "app_id": "d13ec92f-691e-4ac6-88d6-f04e4173f3a2",
+      "action": "init",
+      "details": "Aplicação iniciada",
+      "ip": "::1",
+      "username": "",
+      "created_at": "2026-10-04T19:20:40.599Z"
+    },
+    {
+      "id": 15,
+      "app_id": "d13ec92f-691e-4ac6-88d6-f04e4173f3a2",
+      "action": "init",
+      "details": "Aplicação iniciada",
+      "ip": "::1",
+      "username": "",
+      "created_at": "2026-10-04T19:20:56.894Z"
+    },
+    {
+      "id": 16,
+      "app_id": "d13ec92f-691e-4ac6-88d6-f04e4173f3a2",
+      "action": "login",
+      "details": "Usuário se logou",
+      "ip": "::1",
+      "username": "se",
+      "created_at": "2026-10-04T19:20:56.954Z"
+    }
+  ],
+  "blacklists": [],
+  "variables": []
+}

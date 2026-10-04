@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KeyAuth - Login</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #0a0a1a;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 50%, rgba(88, 28, 255, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(0, 200, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 80%, rgba(255, 0, 128, 0.08) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .login-container {
+      position: relative;
+      width: 460px;
+      padding: 40px 36px;
+      background: rgba(15, 15, 35, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 20px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+    }
+    .logo { text-align: center; margin-bottom: 28px; }
+    .logo h1 {
+      font-size: 32px; font-weight: 700;
+      background: linear-gradient(135deg, #7c3aed, #06b6d4);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+    }
+    .logo p { color: rgba(255,255,255,0.4); font-size: 14px; margin-top: 6px; }
+
+    .tabs {
+      display: flex; gap: 4px; margin-bottom: 24px;
+      background: rgba(255,255,255,0.03); border-radius: 12px; padding: 4px;
+    }
+    .tab-btn {
+      flex: 1; padding: 10px 8px; border: none; background: none;
+      color: rgba(255,255,255,0.4); font-size: 13px; font-weight: 500;
+      border-radius: 8px; cursor: pointer; transition: all 0.2s;
+      font-family: inherit;
+    }
+    .tab-btn:hover { color: rgba(255,255,255,0.7); }
+    .tab-btn.active {
+      background: rgba(124, 58, 237, 0.2); color: #a78bfa;
+      box-shadow: 0 2px 8px rgba(124, 58, 237, 0.15);
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .form-group { margin-bottom: 18px; }
+    .form-group label {
+      display: block; font-size: 13px; color: rgba(255,255,255,0.5);
+      margin-bottom: 8px; font-weight: 500;
+    }
+    .form-group input {
+      width: 100%; padding: 13px 16px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px; color: #fff; font-size: 15px;
+      outline: none; transition: all 0.2s;
+    }
+    .form-group input:focus {
+      border-color: #7c3aed;
+      background: rgba(124, 58, 237, 0.06);
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+    }
+    .form-group select {
+      width: 100%; padding: 13px 16px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px; color: #fff; font-size: 15px;
+      outline: none; transition: all 0.2s; font-family: inherit;
+    }
+    .form-group select:focus { border-color: #7c3aed; }
+    .form-group select option { background: #1a1a3e; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .btn {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, #7c3aed, #6d28d9);
+      color: #fff; border: none; border-radius: 12px;
+      font-size: 15px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s; margin-top: 8px; font-family: inherit;
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 8px 25px rgba(124, 58, 237, 0.35); }
+    .btn:active { transform: translateY(0); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-secondary {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.1);
+      box-shadow: none;
+    }
+    .msg {
+      padding: 12px 16px; border-radius: 10px;
+      font-size: 13px; margin-bottom: 16px; display: none;
+    }
+    .msg.error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444;
+    }
+    .msg.success {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3); color: #22c55e;
+    }
+    .footer { text-align: center; margin-top: 20px; color: rgba(255,255,255,0.3); font-size: 12px; }
+    .info-box {
+      background: rgba(6, 182, 212, 0.08);
+      border: 1px solid rgba(6, 182, 212, 0.2);
+      border-radius: 10px; padding: 12px 16px;
+      margin-bottom: 16px; font-size: 12px; color: rgba(6, 182, 212, 0.8);
+    }
+    .result-box {
+      background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 10px; padding: 16px; margin-top: 16px; display: none;
+    }
+    .result-box .item {
+      display: flex; justify-content: space-between; padding: 6px 0;
+      font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .result-box .item:last-child { border: none; }
+    .result-box .item .label { color: rgba(255,255,255,0.5); }
+    .result-box .item .value { color: #06b6d4; font-family: monospace; }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="logo">
+      <h1>KeyAuth</h1>
+      <p>Sistema de Autenticacao</p>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('admin')">Admin</button>
+      <button class="tab-btn" onclick="switchTab('login')">Login</button>
+      <button class="tab-btn" onclick="switchTab('register')">Registro</button>
+      <button class="tab-btn" onclick="switchTab('license')">Licenca</button>
+    </div>
+
+    <!-- ADMIN LOGIN -->
+    <div class="tab-content active" id="tab-admin">
+      <div class="msg" id="admin-msg"></div>
+      <form id="adminForm">
+        <div class="form-group">
+          <label>Usuario Admin</label>
+          <input type="text" id="admin-user" placeholder="admin" autocomplete="username" required>
+        </div>
+        <div class="form-group">
+          <label>Senha</label>
+          <input type="password" id="admin-pass" placeholder="••••••••" autocomplete="current-password" required>
+        </div>
+        <button type="submit" class="btn">Entrar no Painel</button>
+      </form>
+    </div>
+
+    <!-- CLIENT LOGIN (KeyAuth API) -->
+    <div class="tab-content" id="tab-login">
+      <div class="info-box">Login via API KeyAuth. Selecione a aplicacao e faca login com suas credenciais.</div>
+      <div class="msg" id="login-msg"></div>
+      <form id="clientLoginForm">
+        <div class="form-group">
+          <label>Aplicacao</label>
+          <select id="login-app"></select>
+        </div>
+        <div class="form-group">
+          <label>Usuario</label>
+          <input type="text" id="login-user" placeholder="seu usuario" required>
+        </div>
+        <div class="form-group">
+          <label>Senha</label>
+          <input type="password" id="login-pass" placeholder="••••••••" required>
+        </div>
+        <div class="form-group">
+          <label>HWID (opcional)</label>
+          <input type="text" id="login-hwid" placeholder="deixe vazio para gerar automatico">
+        </div>
+        <button type="submit" class="btn">Login</button>
+      </form>
+      <div class="result-box" id="login-result"></div>
+    </div>
+
+    <!-- REGISTER -->
+    <div class="tab-content" id="tab-register">
+      <div class="info-box">Registre-se com uma chave de licenca valida.</div>
+      <div class="msg" id="register-msg"></div>
+      <form id="registerForm">
+        <div class="form-group">
+          <label>Aplicacao</label>
+          <select id="reg-app"></select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Usuario</label>
+            <input type="text" id="reg-user" placeholder="usuario" required>
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="reg-email" placeholder="email@ex.com">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Senha</label>
+          <input type="password" id="reg-pass" placeholder="••••••••" required>
+        </div>
+        <div class="form-group">
+          <label>Chave de Licenca</label>
+          <input type="text" id="reg-key" placeholder="XXXXX-XXXXX-XXXXX" required>
+        </div>
+        <div class="form-group">
+          <label>HWID (opcional)</label>
+          <input type="text" id="reg-hwid" placeholder="deixe vazio para gerar automatico">
+        </div>
+        <button type="submit" class="btn">Registrar</button>
+      </form>
+    </div>
+
+    <!-- LICENSE KEY -->
+    <div class="tab-content" id="tab-license">
+      <div class="info-box">Ative uma licenca diretamente sem criar conta.</div>
+      <div class="msg" id="license-msg"></div>
+      <form id="licenseForm">
+        <div class="form-group">
+          <label>Aplicacao</label>
+          <select id="lic-app"></select>
+        </div>
+        <div class="form-group">
+          <label>Chave de Licenca</label>
+          <input type="text" id="lic-key" placeholder="XXXXX-XXXXX-XXXXX" required>
+        </div>
+        <div class="form-group">
+          <label>HWID (opcional)</label>
+          <input type="text" id="lic-hwid" placeholder="deixe vazio para gerar automatico">
+        </div>
+        <button type="submit" class="btn">Ativar Licenca</button>
+      </form>
+      <div class="result-box" id="license-result"></div>
+    </div>
+
+    <div class="footer">KeyAuth System v1.0</div>
+  </div>
+
+  <script>
+    if (localStorage.getItem('token')) window.location.href = '/dashboard';
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('tab-' + tab).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    function showMsg(id, text, type) {
+      const el = document.getElementById(id);
+      el.textContent = text;
+      el.className = 'msg ' + type;
+      el.style.display = 'block';
+    }
+
+    function hideMsg(id) {
+      document.getElementById(id).style.display = 'none';
+    }
+
+    function generateHWID() {
+      const nav = navigator;
+      const raw = (nav.userAgent || '') + (nav.language || '') + screen.width + 'x' + screen.height + (nav.hardwareConcurrency || '');
+      let hash = 0;
+      for (let i = 0; i < raw.length; i++) {
+        hash = ((hash << 5) - hash) + raw.charCodeAt(i);
+        hash |= 0;
+      }
+      return 'WEB-' + Math.abs(hash).toString(16).toUpperCase();
+    }
+
+    async function loadApps() {
+      try {
+        const res = await fetch('/api/client/apps-list');
+        const data = await res.json();
+        if (data.success && data.data) {
+          const opts = data.data.map(a => `<option value="${a.id}" data-secret="${a.secret}">${a.name}</option>`).join('');
+          document.getElementById('login-app').innerHTML = opts;
+          document.getElementById('reg-app').innerHTML = opts;
+          document.getElementById('lic-app').innerHTML = opts;
+        }
+      } catch {
+        const fallback = '<option value="">Nenhuma app disponivel</option>';
+        document.getElementById('login-app').innerHTML = fallback;
+        document.getElementById('reg-app').innerHTML = fallback;
+        document.getElementById('lic-app').innerHTML = fallback;
+      }
+    }
+
+    function getSelectedApp(selectId) {
+      const sel = document.getElementById(selectId);
+      const opt = sel.options[sel.selectedIndex];
+      return { id: sel.value, secret: opt ? opt.dataset.secret : '' };
+    }
+
+    // ADMIN LOGIN
+    document.getElementById('adminForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideMsg('admin-msg');
+      const username = document.getElementById('admin-user').value;
+      const password = document.getElementById('admin-pass').value;
+      try {
+        const res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (data.success) {
+          localStorage.setItem('token', data.token);
+          window.location.href = '/dashboard';
+        } else {
+          showMsg('admin-msg', data.message, 'error');
+        }
+      } catch {
+        showMsg('admin-msg', 'Erro de conexao com o servidor', 'error');
+      }
+    });
+
+    // CLIENT LOGIN
+    document.getElementById('clientLoginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideMsg('login-msg');
+      document.getElementById('login-result').style.display = 'none';
+      const app = getSelectedApp('login-app');
+      const username = document.getElementById('login-user').value;
+      const password = document.getElementById('login-pass').value;
+      const hwid = document.getElementById('login-hwid').value || generateHWID();
+
+      try {
+        const initRes = await fetch('/api/client/init', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ app_id: app.id, app_secret: app.secret, version: '1.0' })
+        });
+        const initData = await initRes.json();
+        if (!initData.success) {
+          showMsg('login-msg', initData.message, 'error');
+          return;
+        }
+
+        const loginRes = await fetch('/api/client/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ app_id: app.id, username, password, hwid })
+        });
+        const loginData = await loginRes.json();
+        if (loginData.success) {
+          showMsg('login-msg', 'Login realizado com sucesso!', 'success');
+          const result = document.getElementById('login-result');
+          result.style.display = 'block';
+          result.innerHTML = `
+            <div class="item"><span class="label">Usuario</span><span class="value">${loginData.username}</span></div>
+            <div class="item"><span class="label">Session ID</span><span class="value">${loginData.session_id}</span></div>
+            <div class="item"><span class="label">Nivel</span><span class="value">${loginData.level}</span></div>
+            <div class="item"><span class="label">Expira</span><span class="value">${loginData.expiry ? new Date(loginData.expiry).toLocaleString('pt-BR') : 'Lifetime'}</span></div>
+            <div class="item"><span class="label">HWID</span><span class="value">${loginData.hwid || hwid}</span></div>
+          `;
+        } else {
+          showMsg('login-msg', loginData.message, 'error');
+        }
+      } catch {
+        showMsg('login-msg', 'Erro de conexao com o servidor', 'error');
+      }
+    });
+
+    // REGISTER
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideMsg('register-msg');
+      const app = getSelectedApp('reg-app');
+      const username = document.getElementById('reg-user').value;
+      const password = document.getElementById('reg-pass').value;
+      const email = document.getElementById('reg-email').value;
+      const key = document.getElementById('reg-key').value;
+      const hwid = document.getElementById('reg-hwid').value || generateHWID();
+
+      try {
+        const res = await fetch('/api/client/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ app_id: app.id, username, password, key, email, hwid })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showMsg('register-msg', 'Registro realizado com sucesso! Agora faca login.', 'success');
+        } else {
+          showMsg('register-msg', data.message, 'error');
+        }
+      } catch {
+        showMsg('register-msg', 'Erro de conexao com o servidor', 'error');
+      }
+    });
+
+    // LICENSE
+    document.getElementById('licenseForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideMsg('license-msg');
+      document.getElementById('license-result').style.display = 'none';
+      const app = getSelectedApp('lic-app');
+      const key = document.getElementById('lic-key').value;
+      const hwid = document.getElementById('lic-hwid').value || generateHWID();
+
+      try {
+        const res = await fetch('/api/client/license', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ app_id: app.id, key, hwid })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showMsg('license-msg', 'Licenca ativada com sucesso!', 'success');
+          const result = document.getElementById('license-result');
+          result.style.display = 'block';
+          result.innerHTML = `
+            <div class="item"><span class="label">Nivel</span><span class="value">${data.level}</span></div>
+            <div class="item"><span class="label">Expira</span><span class="value">${data.expiry ? new Date(data.expiry).toLocaleString('pt-BR') : 'Lifetime'}</span></div>
+          `;
+        } else {
+          showMsg('license-msg', data.message, 'error');
+        }
+      } catch {
+        showMsg('license-msg', 'Erro de conexao com o servidor', 'error');
+      }
+    });
+
+    loadApps();
+  </script>
+</body>
+</html>

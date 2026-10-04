@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KeyAuth - Login</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #0a0a1a;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+    }
+    body::before {
+      content:''; position:fixed; inset:0; pointer-events:none;
+      background:
+        radial-gradient(ellipse at 20% 50%, rgba(88,28,255,0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(0,200,255,0.1) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 80%, rgba(255,0,128,0.08) 0%, transparent 50%);
+    }
+    .login-container {
+      position: relative; width: 420px; padding: 48px 40px;
+      background: rgba(15,15,35,0.85); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 20px; backdrop-filter: blur(20px);
+      box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+    }
+    .logo { text-align: center; margin-bottom: 36px; }
+    .logo h1 {
+      font-size: 32px; font-weight: 700;
+      background: linear-gradient(135deg, #7c3aed, #06b6d4);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .logo p { color: rgba(255,255,255,0.4); font-size: 14px; margin-top: 6px; }
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; font-size: 13px; color: rgba(255,255,255,0.5); margin-bottom: 8px; font-weight: 500; }
+    .form-group input {
+      width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
+      color: #fff; font-size: 15px; outline: none; transition: all 0.2s;
+    }
+    .form-group input:focus { border-color: #7c3aed; background: rgba(124,58,237,0.06); box-shadow: 0 0 0 3px rgba(124,58,237,0.15); }
+    .btn {
+      width: 100%; padding: 14px; background: linear-gradient(135deg, #7c3aed, #6d28d9);
+      color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s; margin-top: 8px;
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 8px 25px rgba(124,58,237,0.35); }
+    .btn:active { transform: translateY(0); }
+    .error {
+      background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3);
+      color: #ef4444; padding: 12px 16px; border-radius: 10px;
+      font-size: 13px; margin-bottom: 16px; display: none;
+    }
+    .footer { text-align: center; margin-top: 24px; color: rgba(255,255,255,0.3); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="logo">
+      <h1>KeyAuth</h1>
+      <p>Painel de Administração</p>
+    </div>
+    <div class="error" id="error"></div>
+    <form id="loginForm">
+      <div class="form-group">
+        <label>Usuário</label>
+        <input type="text" id="username" placeholder="admin" autocomplete="username" required>
+      </div>
+      <div class="form-group">
+        <label>Senha</label>
+        <input type="password" id="password" placeholder="admin" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="btn">Entrar</button>
+    </form>
+    <div class="footer">KeyAuth System v1.0 &mdash; Padrão: admin / admin</div>
+  </div>
+  <script>
+    const DB_KEY = 'keyauth_db';
+
+    function getDB() {
+      try {
+        const raw = localStorage.getItem(DB_KEY);
+        if (raw) return JSON.parse(raw);
+      } catch {}
+      const defaultDB = {
+        admin: { username: 'admin', password: 'admin' },
+        apps: [{
+          id: crypto.randomUUID ? crypto.randomUUID() : 'app-' + Date.now(),
+          name: 'Minha Aplicação',
+          secret: Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2),
+          version: '1.0',
+          status: 1,
+          created_at: new Date().toISOString()
+        }],
+        keys: [],
+        users: [],
+        logs: [],
+        blacklist: [],
+        variables: [],
+        sessions: []
+      };
+      localStorage.setItem(DB_KEY, JSON.stringify(defaultDB));
+      return defaultDB;
+    }
+
+    function saveDB(db) { localStorage.setItem(DB_KEY, JSON.stringify(db)); }
+
+    document.getElementById('loginForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const errEl = document.getElementById('error');
+      errEl.style.display = 'none';
+      const u = document.getElementById('username').value;
+      const p = document.getElementById('password').value;
+      const db = getDB();
+      if (u === db.admin.username && p === db.admin.password) {
+        sessionStorage.setItem('keyauth_logged', '1');
+        window.location.href = 'dashboard.html';
+      } else {
+        errEl.textContent = 'Usuário ou senha incorretos';
+        errEl.style.display = 'block';
+      }
+    });
+
+    if (sessionStorage.getItem('keyauth_logged')) window.location.href = 'dashboard.html';
+    getDB();
+  </script>
+</body>
+</html>
